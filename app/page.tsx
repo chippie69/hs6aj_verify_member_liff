@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Swal from "sweetalert2";
+import liff from '@line/liff';
+import { LoaderCircle } from "lucide-react";
 
 import { initLiff } from "@/lib/liff";
 
@@ -32,26 +35,60 @@ export default function Home() {
     setResult(null);
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_GAS_API!, {
+      const response = await fetch("/api/verify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           lineUserId,
-          callsign,
+          callsign: callsign.toUpperCase(),
           idCard,
         })
       })
 
       const data = await response.json();
       if (data.success) {
-        setResult("✅ ยืนยันตัวตนสำเร็จ!");
+        // setResult("✅ ยืนยันตัวตนสำเร็จ!");
+        Swal.fire({
+          title: "สำเร็จ!",
+          text: `${data.message}`,
+          icon: "success",
+          confirmButtonText: "ปิด"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            try {
+              liff.sendMessages([
+                {
+                  type: "text",
+                  text: "ตรวจสอบข้อมูล"
+                }
+              ])
+              console.log("ส่งข้อความสำเร็จ");
+            } catch (error) {
+              console.log("ส่งข้อความไม่สำเร็จ:", error);
+            } finally {
+              liff.closeWindow();
+            }
+          }
+        })
       } else {
-        setResult(`❌ ไม่พบข้อมูลหรือข้อมูลไม่ถูกต้อง กรุณาลองใหม่: ${data.message}`);
+        // setResult(`❌ ไม่พบข้อมูลหรือข้อมูลไม่ถูกต้อง กรุณาลองใหม่: ${data.message}`);
+        Swal.fire({
+          title: "ล้มเหลว!",
+          text: `${data.message}`,
+          icon: "error",
+          confirmButtonText: "ปิด"
+        });
       }
     } catch (error) {
-      setResult("⚠️ เกิดข้อผิดพลาด ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์");
+      // setResult("⚠️ เกิดข้อผิดพลาด ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์");
+      Swal.fire({
+          title: "ผิดพลาด!",
+          text: "เกิดข้อผิดพลาด ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่ภายหลัง",
+          icon: "warning",
+          confirmButtonText: "ปิด"
+        });
     } finally {
       setLoading(false);
     }
@@ -96,7 +133,7 @@ export default function Home() {
               เลขบัตรประชาชน (4 ตัวท้าย)
             </label>
             <input 
-              type="text" 
+              inputMode="numeric"
               value={idCard}
               onChange={(e) => setIdCard(e.target.value)}
               maxLength={4}
@@ -110,7 +147,7 @@ export default function Home() {
             disabled={loading}
             className="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
           >
-            {loading ? "กำลังตรวจสอบ..." : "ยืนยัน"}
+            {loading ? <p className="flex flex-row justify-center items-center"><LoaderCircle size={24} className="animate-spin" /> กำลังตรวจสอบ...</p> : "ยืนยัน"}
           </button>
         </form>
 
