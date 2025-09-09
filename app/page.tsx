@@ -14,6 +14,7 @@ export default function Home() {
   const [idCard, setIdCard] = useState("");
   const [callsign, setCallsign] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingInit, setLoadingInit] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,8 +23,16 @@ export default function Home() {
         const profile = await initLiff(process.env.NEXT_PUBLIC_LIFF_ID!);
         setlineUserId(profile.userId);
         setLineDisplayName(profile.displayName);
+        setLoadingInit(true);
       } catch (error) {
         console.log("LIFF Initialization failed", error);
+        setLoadingInit(false);
+        Swal.fire({
+          title: "ผิดพลาด!",
+          text: "ไม่สามารถเข้าถึงข้อมูลไลน์ได้ กรุณาติดต่อเจ้าหน้าที่หรือลองใหม่ภายหลัง",
+          icon: "error",
+          confirmButtonText: "ปิด"
+        });
       }
     }
     init();
@@ -107,7 +116,7 @@ export default function Home() {
             height={50}
             className=""
           />
-          <p>สวัสดี, {lineDisplayName}</p>
+          <p className="truncate max-w-[200px]">สวัสดี, {lineDisplayName}</p>
         </div>
         <h1 className="text-xl font-bold text-center mb-2 text-green-700">
           ยืนยันตัวตนสมาชิก
@@ -146,10 +155,10 @@ export default function Home() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !loadingInit}
             className="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
           >
-            {loading ? <p className="flex flex-row justify-center items-center"><LoaderCircle size={24} className="animate-spin" /> กำลังตรวจสอบ...</p> : "ยืนยัน"}
+            {loading || !loadingInit ? <p className="flex flex-row justify-center items-center"><LoaderCircle size={24} className="animate-spin" /> โปรดรอ...</p> : "ยืนยัน"}
           </button>
         </form>
 
