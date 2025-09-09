@@ -42,12 +42,14 @@ export default function Home() {
         },
         body: JSON.stringify({
           lineUserId,
+          lineDisplayName,
           callsign: callsign.toUpperCase(),
           idCard,
         })
       })
 
       const data = await response.json();
+      console.log(data);
       if (data.success) {
         // setResult("✅ ยืนยันตัวตนสำเร็จ!");
         Swal.fire({
